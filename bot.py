@@ -1,6 +1,11 @@
 import os
 import random
 
+#covid API
+import requests
+import json
+
+#discord stuff
 import discord
 import asyncio
 from discord import TextChannel, abc, Message
@@ -22,12 +27,12 @@ async def on_ready():
         f'{guild.name}(id: {guild.id})'
     )
 
-@bot.command(name='activate', help='use at your own peril')
-async def activate(ctx):
-    #basically covers if the author is the bot and avoids recursively sending itself a message
-    response = "YOU JUST ACTIVATED MY TRAP CARD\nhttps://tenor.com/view/yugioh-yami-yugi-atem-draws-gif-5742435"
-    await ctx.send(response)
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CheckFailure):
+        await ctx.send('You do not have the correct role for this command.')
 
+#utility functions
 @bot.command(name='clear_all', help='removes all message in the channel')
 @commands.has_role('admin')
 async def clear_all(ctx):
@@ -47,10 +52,12 @@ async def roll(ctx, number_of_dice: int, number_of_sides: int):
         out = out + str(number_gen) + " "
     await ctx.send(out)
 
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CheckFailure):
-        await ctx.send('You do not have the correct role for this command.')
+#random fun stuff
+@bot.command(name='activate', help='use at your own peril')
+async def activate(ctx):
+    #basically covers if the author is the bot and avoids recursively sending itself a message
+    response = "YOU JUST ACTIVATED MY TRAP CARD\nhttps://tenor.com/view/yugioh-yami-yugi-atem-draws-gif-5742435"
+    await ctx.send(response)
 
 @bot.event
 async def on_message(message):
@@ -66,8 +73,39 @@ async def on_message(message):
 #         return
 #     await Message.delete(message)
 
-# red flags
+# COVID commands
+@bot.command(name='covid', help='random covid stuff')
+async def covid(ctx, *args):
+    url = "https://api.covid19api.com/summary"
+
+    payload = {}
+    headers= {}
+
+    response = requests.request("GET", url, headers=headers, data = payload)
+    result = json.loads(response.text)
+    
+    country = " ".join(args[:])
+    country.strip()
+    for country_data in result["Countries"]:
+        if country_data["Country"].lower() == country.lower():
+            output = country_data
+    
+    out = ""
+    for x,y in output.items():
+        if x == "Slug":
+            pass
+        else:
+            out = out + str(x) + ": " + str(y) + "\n"
+   # print(out)
+
+    await ctx.send(str(out))
+    await ctx.send("Last updated: " + str(result["Date"]))
+
+# red flags stuff
+
+
+
 # decrypto
-# 
+ 
 
 bot.run(TOKEN)
