@@ -12,6 +12,9 @@ from discord import TextChannel, abc, Message
 from discord.ext import commands
 from dotenv import load_dotenv
 
+#decrypto stuff
+from database import *
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -106,6 +109,67 @@ async def covid(ctx, *args):
 
 
 # decrypto
- 
+@bot.command(name='decrypto_roll', help='number of dice, number of sides')
+async def decrypto_roll(ctx):
+    out = []
+    total = 1
+    while total <= 3:
+        rand_num = random.randint(1,4)
+        if rand_num not in out:
+            out.append(rand_num)
+            total += 1
+
+    await ctx.send(out)
+
+@bot.command(name='insert', help='insert into word list for decrypto')
+async def insert(ctx, *args):
+    conn = create_connection("decrypto.db")
+    for arg in args:
+        try:
+            insert_into_table(conn,arg.lower())
+        except Error as e:
+            await ctx.send(e)
+    await ctx.send("Added to list")
+    conn.commit()
+    conn.close()
+
+@bot.command(name='remove_word', help='remove word from list')
+async def word_removal(ctx, *args):
+    conn = create_connection("decrypto.db")
+    for arg in args:
+        try:
+            delete_from_table(conn,arg.lower())
+        except Error as e:
+            await ctx.send(e)
+    await ctx.send("Removed from list")
+
+    conn.commit()
+    conn.close()
+
+@bot.command(name='pull_all', help='gets all the words from the decrypto word list')
+async def pull_all(ctx):
+    conn = create_connection("decrypto.db")
+    rows = select_from_table(conn)
+    out = ""
+    for row in rows:
+        out = out + row[0] + "\n"
+    await ctx.send(out)
+    conn.commit()
+    conn.close()
+
+@bot.command(name='word_generate', help='generates a number of words')
+async def word_generate(ctx):
+    await ctx.send("Your words are: ")
+    conn = create_connection("decrypto.db")
+    rows = select_from_table(conn)
+    random_list = []
+    for row in rows:
+        random_list.append(row[0])
+    random.shuffle(random_list)
+    random_list = random.sample(random_list, k=4)
+    await ctx.send(" ".join(random_list))
+    conn.close()
+
+
 
 bot.run(TOKEN)
