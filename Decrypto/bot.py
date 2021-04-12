@@ -45,10 +45,10 @@ async def clear_all(ctx):
     await ctx.send("Welcome to your empty chat")
 
 @bot.command(name='roll', help='number of dice, number of sides')
+@commands.has_role('admin')
 async def roll(ctx, number_of_dice: int, number_of_sides: int):
     if number_of_dice is None or number_of_sides is None:
         await ctx.send("Missing information, please insert: number of dice, number of sides")
-    
     out = ""
     for i in range(number_of_dice):
         number_gen = random.randint(1,number_of_sides)
@@ -122,6 +122,7 @@ async def decrypto_roll(ctx):
     await ctx.send(out)
 
 @bot.command(name='insert', help='insert into word list for decrypto')
+@commands.has_role('admin')
 async def insert(ctx, *args):
     conn = create_connection("decrypto.db")
     for arg in args:
@@ -169,6 +170,9 @@ async def word_generate(ctx):
     random_list = random.sample(random_list, k=4)
     await ctx.send(" ".join(random_list))
     conn.close()
+
+# murder in hongkong board game
+
 
 
 
